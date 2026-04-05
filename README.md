@@ -1,1 +1,1 @@
-# classlog-app
+# class-pa&st-record
