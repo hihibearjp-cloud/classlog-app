@@ -1,324 +1,1105 @@
-<!doctype html>
-<html lang="zh-Hant">
+
+<!DOCTYPE html>
+<html lang="zh-TW">
 <head>
-  <meta charset="utf-8" />
-  <!-- 讓 iPhone / iPad 可以「加入主畫面」成為 APP -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="班級小管家">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  
+  <!-- === iOS Web App 專屬設定 === -->
+  <meta name="apple-mobile-web-app-title" content="親師聯絡&輔導手札" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-<!-- App Icon（你可以換成自己的 icon.png）-->
-<link rel="apple-touch-icon" href="icon.png">
+  <title>親師聯絡&輔導手札</title>
 
-<!-- 讓手機不會縮放或亂掉 -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>班級小管家1.0版</title>
-  <meta name="theme-color" content="#FEF9F2" />
-  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+  <!-- 自動生成圖示腳本 -->
+  <script>
+    (function() {
+      var svgStr = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><rect width="512" height="512" fill="#F4EDE4" /><rect x="86" y="86" width="340" height="340" rx="70" fill="#5C3A21" /><rect x="56" y="56" width="340" height="340" rx="70" fill="#FFFBF5" stroke="#5C3A21" stroke-width="24" /><circle cx="150" cy="150" r="48" fill="#5C3A21" transform="translate(10, 10)" /><circle cx="150" cy="150" r="48" fill="#FFB7B2" stroke="#5C3A21" stroke-width="16" /><circle cx="302" cy="150" r="48" fill="#5C3A21" transform="translate(10, 10)" /><circle cx="302" cy="150" r="48" fill="#B5EAD7" stroke="#5C3A21" stroke-width="16" /><circle cx="150" cy="302" r="48" fill="#5C3A21" transform="translate(10, 10)" /><circle cx="150" cy="302" r="48" fill="#FFF5BA" stroke="#5C3A21" stroke-width="16" /><circle cx="302" cy="302" r="48" fill="#5C3A21" transform="translate(10, 10)" /><circle cx="302" cy="302" r="48" fill="#C7CEEA" stroke="#5C3A21" stroke-width="16" /></svg>';
+      var canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512; var ctx = canvas.getContext('2d'); var img = new Image();
+      img.onload = function() { ctx.drawImage(img, 0, 0); var pngDataUrl = canvas.toDataURL('image/png'); var appleIcon = document.createElement('link'); appleIcon.rel = 'apple-touch-icon'; appleIcon.href = pngDataUrl; document.head.appendChild(appleIcon); var favicon = document.createElement('link'); favicon.rel = 'icon'; favicon.href = pngDataUrl; document.head.appendChild(favicon); };
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgStr)));
+    })();
+  </script>
+
+  <!-- 引入 Tailwind CSS 與 Babel -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- 引入 Google 手寫風字體 (Klee One) -->
+  <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&display=swap" rel="stylesheet">
+
   <style>
-    :root{--coffee:#5D4037;--bg:#FEF9F2}
-    *{box-sizing:border-box}
-    body{font-family:'ZCOOL KuaiLe',sans-serif;background:var(--bg);color:var(--coffee);margin:0;padding:16px;min-height:100vh}
-    .container{max-width:900px;margin:0 auto}
-    header{display:flex;justify-content:space-between;align-items:center;gap:12px}
-    h1{margin:0;font-size:1.4rem}
-    .card{background:#fff;border:3px solid var(--coffee);border-radius:12px;padding:12px;margin-top:12px;box-shadow:4px 4px 0 rgba(0,0,0,0.04)}
-    .row{display:flex;gap:8px;align-items:center}
-    .row.wrap{flex-wrap:wrap}
-    .btn{border:3px solid var(--coffee);padding:8px 12px;border-radius:12px;background:#fff;cursor:pointer;font-weight:700}
-    .btn.big{padding:12px 16px;font-size:1rem}
-    .btn.primary{background:#CDF0EA}
-    .btn.warn{background:#FDFD96}
-    .badge{background:var(--coffee);color:#fff;padding:4px 8px;border-radius:999px;font-weight:800}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
-    .student{border:2px dashed #ccc;border-radius:8px;padding:6px;background:#fff;display:flex;justify-content:space-between;align-items:center}
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:999}
-    .modal .box{background:#fff;padding:12px;border-radius:12px;width:100%;max-width:520px;max-height:85vh;overflow:auto;border:3px solid var(--coffee)}
-    .list-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-    textarea,input,select{width:100%;padding:8px;border:2px solid var(--coffee);border-radius:8px}
-    .small{font-size:0.85rem}
-    footer{margin-top:24px;font-size:0.8rem;color:#666}
-    @media(max-width:600px){ .list-grid{grid-template-columns:repeat(3,1fr)} h1{font-size:1.1rem} }
+    body { overscroll-behavior-y: none; -webkit-overflow-scrolling: touch; background-color: #F4EDE4; }
+    .custom-scrollbar::-webkit-scrollbar { display: none; }
+    .custom-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+    .action-btn { transition: all 0.15s ease; }
+    .action-btn:active { transform: scale(0.97); }
+    .guide-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    
+    /* 專屬簽名檔樣式：手寫、粗體、斜體 */
+    .signature-text {
+      font-family: 'Klee One', 'Comic Sans MS', 'Chalkboard SE', cursive;
+      font-weight: 900;
+      font-style: italic;
+    }
+
+    /* 普普風立體馬卡龍按鈕：咖啡色邊框 + 咖啡色字 */
+    .macaron-btn {
+      border: 2.5px solid #5C3A21 !important; 
+      color: #5C3A21 !important; 
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .macaron-btn svg {
+      stroke: #5C3A21 !important;
+    }
+    .macaron-btn-active {
+      transform: translate(4px, 4px) !important;
+      box-shadow: 0px 0px 0 #5C3A21 !important; 
+      background-image: linear-gradient(rgba(0,0,0,0.05), rgba(0,0,0,0.05)); 
+    }
+    .macaron-btn-idle {
+      box-shadow: 4px 4px 0 #5C3A21 !important; 
+      transform: translate(0, 0) !important;
+    }
+    .macaron-btn:active {
+      transform: translate(4px, 4px) !important;
+      box-shadow: 0px 0px 0 #5C3A21 !important;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div>
-        <h1>📚 班級小管家（簡易版）</h1>
-        <div class="small" id="subtitle"></div>
-      </div>
-      <div class="row">
-        <button class="btn" id="backupBtn">備份 JSON</button>
-        <input id="restoreFile" type="file" accept=".json" style="display:none">
-        <button class="btn" id="restoreBtn">還原 JSON</button>
-      </div>
-    </header>
+  <div id="root"></div>
 
-    <div class="card">
-      <div class="row" style="justify-content:space-between">
-        <div style="flex:1;max-width:360px">
-          <label class="small">日期</label>
-          <input type="date" id="dateInput" />
-        </div>
-        <div style="flex:1;max-width:240px">
-          <label class="small">週次 / 值日</label>
-          <input id="weekInput" placeholder="例：2週 / 幹部: 王小明" />
-        </div>
-        <div style="flex-basis:180px;text-align:right">
-          <label class="small">&nbsp;</label><br/>
-          <button class="btn big" id="exportCsvBtn">匯出今日 CSV</button>
-        </div>
-      </div>
-    </div>
+  <script type="text/babel" data-type="module">
+    import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
+    import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0';
+    import { Calendar, FileText, Download, Trash2, Edit2, Plus, Save, AlertCircle, CheckSquare, Square, Clock, Filter, FileSpreadsheet, Settings, HelpCircle, X, Users, Upload, Database, AlertTriangle, Bell, PlusCircle, MessageCircle, Copy, CheckCircle2, Send, Smartphone, BookOpen, Lightbulb, ListChecks, ArrowRight, Zap, MessageSquare } from 'https://esm.sh/lucide-react@0.292.0?deps=react@18.2.0';
 
-    <div class="card">
-      <h3>🔔 到校狀況</h3>
-      <div class="grid" id="attendanceBtns"></div>
-    </div>
-
-    <div class="card">
-      <h3>📘 作業 / 聯絡簿</h3>
-      <div class="row wrap" id="missingBtns"></div>
-      <div style="margin-top:8px">
-        <label class="small">科目列表（一行一個，按下「匯入名單」會取代學生名單）</label>
-        <textarea id="bulkSubject" rows="3" placeholder="國文&#10;數學"></textarea>
-        <div class="row" style="margin-top:8px">
-          <button class="btn" id="addSubjectBtn">新增科目</button>
-          <button class="btn" id="resetSubjectsBtn">重置預設科目</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <h3>👥 學生名單</h3>
-        <div class="row">
-          <button class="btn" id="bulkImportBtn">批次匯入姓名</button>
-          <button class="btn" id="resetStudentsBtn">恢復預設 (30 人)</button>
-        </div>
-      </div>
-
-      <div style="margin-top:8px" id="studentsContainer"></div>
-    </div>
-
-    <footer>
-      提示：把整個檔案上傳到 GitHub，命名為 <code>index.html</code>，然後啟用 GitHub Pages（branch：main / root）。
-    </footer>
-  </div>
-
-  <!-- Modal（動態建立） -->
-  <div id="modalRoot"></div>
-
-  <script>
-    /***********************
-     * 資料與預設值
-     ***********************/
-    const DB_KEY = 'classlog_simple_v1';
-    const DEFAULT_SUBJECTS = ['國文','英語','數學','理化','社會'];
-    const ATTENDANCE_TYPES = [
-      { id:'late', label:'遲到', color:'#FDFD96' },
-      { id:'sick', label:'病假', color:'#CDF0EA' },
-      { id:'official', label:'公假', color:'#C4E4FF' },
-      { id:'personal', label:'事假', color:'#E2C4FF' },
-      { id:'absent', label:'缺席', color:'#FFC4C4' }
-    ];
-    let state = {
-      date: null,
-      week: '',
-      students: Array.from({length:30}, (_,i)=>({id:i+1,name:`${i+1}號`})),
-      subjects: [...DEFAULT_SUBJECTS],
-      attendance: {}, // { date: { typeId: [ids] } } but we'll keep only today's
-      missing: {}, // { subjectId: [ids] }
+    // --- 預設語錄資料庫 ---
+    const defaultTemplates = {
+      '正向鼓勵與生活關懷': [
+        "今天在校表現優異，主動參與討論且態度積極，值得鼓勵！",
+        "近期課堂積極舉手發言，答題正確率提升。請家長在家多給予肯定，建立孩子自信！",
+        "今日大掃除非常認真，負責區域一塵不染，展現極佳責任感，值得表揚！"
+      ],
+      '學習習慣與常規提醒': [
+        "今日上課認真，可惜忘了帶課本/文具。建議睡前提醒孩子整理書包，養成檢查習慣。",
+        "近期在校參與度高，但打掃易與同學聊天分心。已提醒『先完成份內工作』，請家長協助叮嚀。",
+        "在校與同學相處融洽，但作業/聯絡簿偶有遺漏。請家長協助檢視書寫狀況，培養責任感。",
+        "課堂專注度與參與度仍有進步空間。請家長協助提醒上課專心，鼓勵主動完成任務。"
+      ],
+      '生活作息與突發狀況': [
+        "今日上課略顯疲累。擔心過度使用3C影響專注與視力，建議家長與孩子約定使用時間。",
+        "今日情緒較波動，與同學發生口角。已引導『先停下來再溝通』，請家長多留意孩子心情。",
+        "今日到校時間較晚，易錯過晨間宣導。為確保學習步調，懇請家長協助提醒早點出門。",
+        "今日在校反映身體不適，已至健康中心休息觀察。請家長留意後續狀況，必要時多休息。",
+        "今日尚未到校，想確認是否身體不適或需請假？再請家長回覆或致電告知，謝謝。",
+        "近期上課精神不佳，老師有些擔心。再請家長協助留意孩子的居家作息與睡眠時間。",
+        "孩子近期有遲到情形，請家長協助調整作息，培養準時到校的習慣。",
+        "若有請假需求，請務必依規定完成手續，以利學校掌握學生出缺席狀況。"
+      ],
+      '班級與學校配合事項': [
+        "明日有體育課，請提醒孩子穿著體育服裝到校。",
+        "學校發放之重要通知或回條，請家長留意內容、簽名，並提醒孩子準時交回。",
+        "下週即將進行評量，請家長協助督促孩子在家複習，預祝考試順利！",
+        "近期早晚溫差大，請提醒孩子多帶保暖衣物，注意健康。",
+        "本週五為學校班親會，誠摯邀請家長踴躍參與，一同關心孩子學習狀況！",
+        "重要事項請家長與孩子一同確認，感謝配合學校事務，共同協助孩子成長。"
+      ],
+      '作業與考試表現': [
+        "孩子有作業未準時繳交，請家長協助督促按時完成。",
+        "作業是學習的重要環節，建議養成每日檢查與整理的習慣。",
+        "若有缺交情形，請儘速完成補交，以免影響學習進度。",
+        "近期測驗表現仍有加強空間，建議多加複習課堂內容。",
+        "可協助孩子規劃讀書時間，培養穩定的複習習慣。"
+      ],
+      '結語 (文末附加)': [
+        "感謝家長的支持與配合，讓我們一起協助孩子持續進步。",
+        "若有任何問題，歡迎隨時與老師聯繫，共同關心孩子成長。"
+      ]
     };
 
-    /***********************
-     * UI 快速 helpers
-     ***********************/
-    const $ = (sel) => document.querySelector(sel);
-    const el = (tag, props={}, ...children)=>{ const d=document.createElement(tag); for(const k in props){ if(k==='style') Object.assign(d.style,props[k]); else if(k.startsWith('on')) d.addEventListener(k.slice(2),props[k]); else d.setAttribute(k,props[k]); } children.forEach(c=>{ if(typeof c==='string') d.appendChild(document.createTextNode(c)); else if(c) d.appendChild(c); }); return d; }
+    const ClassroomLogApp = () => {
+      // --- 系統基礎設定 ---
+      useEffect(() => {
+        document.body.style.overscrollBehaviorY = 'none';
+        return () => { document.body.style.overscrollBehaviorY = 'auto'; };
+      }, []);
 
-    /***********************
-     * 初始化與儲存
-     ***********************/
-    function loadState(){
-      try{
-        const raw = localStorage.getItem(DB_KEY);
-        if(raw){ const s = JSON.parse(raw); state = {...state, ...s}; }
-      }catch(e){ console.error(e); }
-      // date default today (ISO yyyy-mm-dd)
-      if(!state.date){
-        const now=new Date(); const off=now.getTimezoneOffset()*60000; state.date=new Date(now.getTime()-off).toISOString().split('T')[0];
-      }
-    }
-    function saveState(){ localStorage.setItem(DB_KEY, JSON.stringify(state)); render(); }
-
-    /***********************
-     * Render functions
-     ***********************/
-    function render(){
-      $('#dateInput').value = state.date;
-      $('#weekInput').value = state.week || '';
-      $('#subtitle').textContent = `${state.date}`;
-
-      // attendance buttons
-      const attRoot = $('#attendanceBtns'); attRoot.innerHTML='';
-      ATTENDANCE_TYPES.forEach(t => {
-        const count = (state.attendance[t.id]||[]).length;
-        const b = el('button',{class:'btn', style:{background:t.color,display:'flex',justifyContent:'space-between',alignItems:'center'}, onClick:()=>openSelector('attendance', t.id, t.label)}, el('span',{},t.label), el('span',{class:'badge'}, count));
-        attRoot.appendChild(b);
-      });
-
-      // missing buttons
-      const missingRoot = $('#missingBtns'); missingRoot.innerHTML='';
-      const contactTypes = ['聯絡簿缺交','家長未簽名','聯絡簿優良'];
-      contactTypes.concat(state.subjects).forEach((label,idx)=>{
-        const id = 'm_'+idx;
-        const count = (state.missing[id]||[]).length;
-        const b = el('button',{class:'btn', style:{background:'#fff'}, onClick:()=>openSelector('missing', id, label)}, label, el('span',{class:'badge', style:{marginLeft:8}}, count));
-        missingRoot.appendChild(b);
-      });
-
-      // students list
-      const sc = $('#studentsContainer'); sc.innerHTML='';
-      const box = el('div',{});
-      state.students.forEach(s=>{
-        const row = el('div',{class:'student', style:{marginBottom:'6px'}},
-          el('div',{}, `${s.id}. ${s.name}`),
-          el('div',{}, el('button',{class:'btn', onClick:()=>editStudentName(s.id)}, '編輯'))
-        );
-        sc.appendChild(row);
-      });
-    }
-
-    /***********************
-     * 操作 UI
-     ***********************/
-    function openSelector(type, key, label){
-      // type: 'attendance' or 'missing'
-      const modalRoot = $('#modalRoot'); modalRoot.innerHTML='';
-      const box = el('div',{class:'modal'},
-        el('div',{class:'box'},
-          el('div',{}, el('strong',{}, `${label}`), el('span',{style:{float:'right'}}, el('button',{class:'btn', onClick:closeModal}, '完成')) ),
-          el('div',{style:{height:12}}),
-          el('div',{class:'list-grid'},
-            ...state.students.map(s=>{
-              const selected = (type==='attendance' ? (state.attendance[key]||[]) : (state.missing[key]||[])).includes(s.id);
-              return el('button',{class:'btn', style:{background:selected?'#5D4037':'#fff',color:selected?'#fff':'inherit'}, onClick:()=>toggleMark(type,key,s.id)}, `${s.id}. ${s.name}` );
-            })
-          )
-        )
-      );
-      modalRoot.appendChild(box);
-      function closeModal(){ modalRoot.innerHTML=''; saveState(); }
-    }
-
-    function closeModal(){ $('#modalRoot').innerHTML=''; }
-
-    function toggleMark(type, key, studentId){
-      if(type==='attendance'){
-        const arr = state.attendance[key]||[];
-        if(arr.includes(studentId)) state.attendance[key]=arr.filter(x=>x!==studentId);
-        else state.attendance[key]=[...arr,studentId];
-      } else {
-        const arr = state.missing[key]||[];
-        if(arr.includes(studentId)) state.missing[key]=arr.filter(x=>x!==studentId);
-        else state.missing[key]=[...arr,studentId];
-      }
-      render();
-    }
-
-    function editStudentName(id){
-      const s = state.students.find(x=>x.id===id);
-      const newName = prompt('修改學生名稱', s.name);
-      if(newName!==null){ s.name = newName.trim()||s.name; saveState(); }
-    }
-
-    /***********************
-     * 匯出 CSV / 備份 還原
-     ***********************/
-    function exportTodayCSV(){
-      const date = state.date;
-      let csv = `班級日誌,日期,${date}\n\n`;
-      csv += '類別,項目,學生\n';
-      for(const t of ATTENDANCE_TYPES){
-        const list = (state.attendance[t.id]||[]).map(id=>state.students.find(s=>s.id===id)?.name||id).join('、');
-        if(list) csv += `到校,${t.label},"${list}"\n`;
-      }
-      csv += '\n作業缺交\n';
-      Object.keys(state.missing).forEach(k=>{
-        if(state.missing[k] && state.missing[k].length>0){
-          const label = k.startsWith('m_') ? (k==='m_0' ? '聯絡簿缺交' : (k==='m_1' ? '家長未簽名' : (k==='m_2' ? '聯絡簿優良' : state.subjects[Number(k.split('_')[1]) - 3] || k))) : k;
-          const names = state.missing[k].map(id=>state.students.find(s=>s.id===id)?.name||id).join('、');
-          csv += `${label},缺交,"${names}"\n`;
-        }
-      });
-
-      const blob = new Blob([`\uFEFF${csv}`], {type:'text/csv;charset=utf-8;'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `班級日誌_${date}.csv`; a.click();
-    }
-
-    function backupJSON(){
-      const payload = { version:'simple_v1', timestamp:new Date().toISOString(), data:state };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `classlog_backup_${state.date}.json`; a.click();
-    }
-
-    function restoreFromFile(file){
-      const reader = new FileReader();
-      reader.onload = (e)=>{
-        try{
-          const payload = JSON.parse(e.target.result);
-          if(payload && payload.data){
-            state = {...state, ...payload.data};
-            saveState();
-            alert('還原成功');
-          } else alert('檔案格式不正確');
-        }catch(err){ alert('讀取失敗'); }
+      const getWeekday = (dateString) => {
+        const days = ['日', '一', '二', '三', '四', '五', '六'];
+        return days[new Date(dateString).getDay()];
       };
-      reader.readAsText(file);
-    }
 
-    /***********************
-     * 事件綁定
-     ***********************/
-    document.addEventListener('DOMContentLoaded', ()=>{
-      loadState();
+      const defaultGradeOptions = ['一上', '一下', '二上', '二下', '三上', '三下'];
+      const periodOptions = ['早修', '一', '二', '三', '四', '午餐', '午休', '五', '六', '七', '八'];
+      const incidentCategoryOptions = ['1. 拒學/中輟', '2. 自傷/自殺', '3. 藥物濫用', '4. 性侵/性騷擾', '5. 家暴/兒虐', '6. 哀傷/失落', '7. 家庭/親子', '8. 情緒困擾', '9. 人際困擾', '10. 學習困擾', '11. 精神疾患', '12. 特教', '13. 偏差行為', '14. 性別/感情', '15. 生涯議題', '16. 其他'];
+      const defaultNotifiedOptions = ['父', '母', '資源班老師', '專輔老師', '學務處'];
 
-      // date change
-      $('#dateInput').addEventListener('change', (e)=>{ state.date = e.target.value; saveState(); });
-      $('#weekInput').addEventListener('input', (e)=>{ state.week = e.target.value; saveState(); });
+      // --- 狀態管理 ---
+      
+      // 動態學生人數 (預設 35)
+      const [studentCount, setStudentCount] = useState(() => {
+        const saved = localStorage.getItem('louisaClassroomStudentCount');
+        return saved ? parseInt(saved, 10) : 35;
+      });
+      const seatOptions = Array.from({ length: studentCount }, (_, i) => String(i + 1));
 
-      // students area buttons
-      $('#bulkImportBtn').addEventListener('click', ()=>{
-        const txt = prompt('請貼上學生名字，每行一個，將取代現有名單', state.students.map(s=>s.name).join('\\n'));
-        if(txt!==null){
-          const names = txt.split('\\n').map(s=>s.trim()).filter(Boolean);
-          if(names.length>0){ state.students = names.map((n,i)=>({id:i+1,name:n})); saveState(); }
+      const [roster, setRoster] = useState(() => {
+        const saved = localStorage.getItem('louisaClassroomRoster');
+        return saved ? JSON.parse(saved) : { '1': '周杰倫', '2': '王力宏', '5': '蔡依林', '10': '孫燕姿', '11': '陳奕迅', '12': '梁靜茹' };
+      });
+
+      const [logs, setLogs] = useState(() => {
+        const saved = localStorage.getItem('louisaClassroomLogs');
+        return saved ? JSON.parse(saved) : [];
+      });
+
+      const [notifiedOptions, setNotifiedOptions] = useState(() => {
+        const saved = localStorage.getItem('louisaNotifiedOptions');
+        return saved ? JSON.parse(saved) : defaultNotifiedOptions;
+      });
+
+      const [templates, setTemplates] = useState(() => {
+        const saved = localStorage.getItem('louisaClassroomTemplates_v4');
+        return saved ? JSON.parse(saved) : defaultTemplates;
+      });
+
+      // 年級選單狀態 (支援自訂並存入 LocalStorage)
+      const [gradeOptions, setGradeOptions] = useState(() => {
+        const saved = localStorage.getItem('louisaGradeOptions');
+        return saved ? JSON.parse(saved) : defaultGradeOptions;
+      });
+
+      useEffect(() => { localStorage.setItem('louisaClassroomStudentCount', studentCount.toString()); }, [studentCount]);
+      useEffect(() => { localStorage.setItem('louisaClassroomRoster', JSON.stringify(roster)); }, [roster]);
+      useEffect(() => { localStorage.setItem('louisaClassroomLogs', JSON.stringify(logs)); }, [logs]);
+      useEffect(() => { localStorage.setItem('louisaNotifiedOptions', JSON.stringify(notifiedOptions)); }, [notifiedOptions]);
+      useEffect(() => { localStorage.setItem('louisaClassroomTemplates_v4', JSON.stringify(templates)); }, [templates]);
+      useEffect(() => { localStorage.setItem('louisaGradeOptions', JSON.stringify(gradeOptions)); }, [gradeOptions]);
+
+      const [activeTab, setActiveTab] = useState('contact'); 
+      
+      const [filterSeat, setFilterSeat] = useState('');
+      const [exportFilterSeat, setExportFilterSeat] = useState('');
+      const [selectedForExport, setSelectedForExport] = useState([]);
+
+      const [showStudentModal, setShowStudentModal] = useState(false);
+      const [studentModalTarget, setStudentModalTarget] = useState('new'); 
+      const [editingLog, setEditingLog] = useState(null);
+
+      const [tempSelectedSeats, setTempSelectedSeats] = useState([]);
+      const [batchImportText, setBatchImportText] = useState('');
+      const [customPartyInput, setCustomPartyInput] = useState('');
+      const fileInputRef = useRef(null);
+
+      const [newLog, setNewLog] = useState({
+        date: new Date().toISOString().split('T')[0], period: '', grade: gradeOptions[0] || '一上', seatNumber: '', type: 'general', incidentCategories: [], notifiedParties: [], student: '', content: '', teacher: '導師'
+      });
+
+      const [contactSeat, setContactSeat] = useState('');
+      const [contactCategory, setContactCategory] = useState(() => Object.keys(templates)[0] || '');
+      const [contactSelectedTemplateIdx, setContactSelectedTemplateIdx] = useState('');
+      const [contactDraft, setContactDraft] = useState('');
+      const [isCopied, setIsCopied] = useState(false);
+      
+      const [settingManageCategory, setSettingManageCategory] = useState(() => Object.keys(templates)[0] || '');
+
+      // --- 邏輯功能 ---
+      const openStudentModal = (target) => {
+        setStudentModalTarget(target);
+        let currentSeats = [];
+        if (target === 'new' && newLog.seatNumber) currentSeats = newLog.seatNumber.split(', ');
+        if (target === 'edit' && editingLog.seatNumber) currentSeats = editingLog.seatNumber.split(', ');
+        if (target === 'contact' && contactSeat) currentSeats = contactSeat.split(', ');
+        setTempSelectedSeats(currentSeats);
+        setShowStudentModal(true);
+      };
+
+      const toggleSeatSelection = (seat) => setTempSelectedSeats(prev => prev.includes(seat) ? prev.filter(s => s !== seat) : [...prev, seat].sort((a,b) => parseInt(a) - parseInt(b)));
+
+      const confirmStudentSelection = () => {
+        const seatString = tempSelectedSeats.join(', ');
+        const studentString = tempSelectedSeats.map(seat => roster[seat] || '').filter(Boolean).join(', ');
+        
+        if (studentModalTarget === 'new') {
+          setNewLog(prev => ({ ...prev, seatNumber: seatString, student: studentString || prev.student }));
+        } else if (studentModalTarget === 'edit') {
+          setEditingLog(prev => ({ ...prev, seatNumber: seatString, student: studentString || prev.student }));
+        } else if (studentModalTarget === 'contact') {
+          setContactSeat(seatString);
         }
-      });
-      $('#resetStudentsBtn').addEventListener('click', ()=>{
-        if(confirm('要恢復為 30 人預設名單嗎？')){ state.students = Array.from({length:30}, (_,i)=>({id:i+1,name:`${i+1}號`})); saveState(); }
-      });
+        setShowStudentModal(false);
+      };
 
-      // subjects
-      $('#addSubjectBtn').addEventListener('click', ()=>{
-        const s = $('#bulkSubject').value.trim();
-        if(s){ const lines = s.split('\\n').map(x=>x.trim()).filter(Boolean); state.subjects = [...state.subjects, ...lines]; $('#bulkSubject').value=''; saveState(); }
-      });
-      $('#resetSubjectsBtn').addEventListener('click', ()=>{ state.subjects = [...DEFAULT_SUBJECTS]; saveState(); });
+      const handleAddLog = (e) => {
+        e.preventDefault();
+        if (!newLog.content || (!newLog.student && !newLog.seatNumber && newLog.student !== '全班')) return alert('請填寫對象與事件內容。');
+        setLogs([{ id: Date.now(), ...newLog }, ...logs]);
+        setNewLog({ ...newLog, period: '', seatNumber: '', type: 'general', incidentCategories: [], notifiedParties: [], student: '', content: '' });
+        alert('紀錄已儲存。');
+      };
 
-      // export csv
-      $('#exportCsvBtn').addEventListener('click', ()=>exportTodayCSV());
+      const handleEditSave = (e) => {
+        e.preventDefault();
+        if (!editingLog.content || (!editingLog.student && !editingLog.seatNumber && editingLog.student !== '全班')) return alert('請填寫對象與事件內容。');
+        setLogs(logs.map(l => l.id === editingLog.id ? editingLog : l));
+        setEditingLog(null);
+        alert('修改已儲存成功。');
+      };
 
-      // backup / restore
-      $('#backupBtn').addEventListener('click', ()=>backupJSON());
-      $('#restoreBtn').addEventListener('click', ()=>$('#restoreFile').click());
-      $('#restoreFile').addEventListener('change', (e)=>{ const f=e.target.files[0]; if(f) restoreFromFile(f); e.target.value=''; });
+      const handleDelete = (id) => {
+        if (confirm('確定刪除此紀錄嗎？此動作無法復原。')) {
+          setLogs(logs.filter(log => log.id !== id));
+          setSelectedForExport(selectedForExport.filter(exportId => exportId !== id));
+        }
+      };
 
-      // initial render
-      render();
-    });
+      const toggleCategory = (category, target) => {
+        const updater = target === 'new' ? setNewLog : setEditingLog;
+        updater(prev => {
+          const current = prev.incidentCategories || [];
+          return { ...prev, incidentCategories: current.includes(category) ? current.filter(c => c !== category) : [...current, category] };
+        });
+      };
+
+      const toggleParty = (party, target) => {
+        const updater = target === 'new' ? setNewLog : setEditingLog;
+        updater(prev => {
+          const current = prev.notifiedParties || [];
+          return { ...prev, notifiedParties: current.includes(party) ? current.filter(p => p !== party) : [...current, party] };
+        });
+      };
+
+      const handleAddCustomParty = (e, target) => {
+        e.preventDefault();
+        const trimmed = customPartyInput.trim();
+        if (trimmed && !notifiedOptions.includes(trimmed)) {
+          setNotifiedOptions([...notifiedOptions, trimmed]);
+          toggleParty(trimmed, target);
+        }
+        setCustomPartyInput('');
+      };
+
+      const handleBatchImport = () => {
+        if(!batchImportText.trim()) return;
+        const names = batchImportText.split('\n').map(n => n.trim()).filter(n => n);
+        const newRoster = { ...roster };
+        const newCount = Math.max(studentCount, names.length);
+        setStudentCount(newCount);
+        names.forEach((name, index) => { newRoster[String(index + 1)] = name; });
+        setRoster(newRoster); setBatchImportText(''); 
+        alert(`成功匯入 ${names.length} 筆學生姓名！班級總人數已自動調整為 ${newCount} 人。`);
+      };
+
+      const handleBackupJSON = () => {
+        const blob = new Blob([JSON.stringify({ studentCount, roster, logs, notifiedOptions, templates, gradeOptions, exportDate: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a'); link.href = url;
+        link.download = `手札備份_${new Date().toISOString().split('T')[0]}.json`; link.click(); URL.revokeObjectURL(url);
+      };
+
+      const handleRestoreJSON = (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const data = JSON.parse(event.target.result);
+            if (data.roster && data.logs && confirm('警告：這將會覆蓋您目前的資料。確定要還原嗎？')) {
+              setRoster(data.roster); setLogs(data.logs); 
+              if (data.studentCount) setStudentCount(data.studentCount);
+              if (data.notifiedOptions) setNotifiedOptions(data.notifiedOptions);
+              if (data.gradeOptions) setGradeOptions(data.gradeOptions);
+              if (data.templates) {
+                setTemplates(data.templates);
+                const firstCat = Object.keys(data.templates)[0] || '';
+                setContactCategory(firstCat); setSettingManageCategory(firstCat);
+              }
+              alert('資料還原成功！');
+            } else if (!data.roster || !data.logs) alert('檔案格式錯誤，缺少必要資料。');
+          } catch (err) { alert('解析檔案失敗，請確定這是一個正確的 JSON 備份檔。'); }
+        };
+        reader.readAsText(file); e.target.value = ''; 
+      };
+
+      const handleClearAllData = () => {
+        if (confirm('⚠️ 將會清除系統內「所有」的日誌與名單資料！確定嗎？') && confirm('二次確認：資料清除後將【永遠無法復原】，確定？')) {
+          setLogs([]); setRoster({}); setNotifiedOptions(defaultNotifiedOptions); setTemplates(defaultTemplates); setStudentCount(35); setGradeOptions(defaultGradeOptions);
+          setContactCategory(Object.keys(defaultTemplates)[0] || ''); setSettingManageCategory(Object.keys(defaultTemplates)[0] || '');
+          localStorage.removeItem('louisaClassroomLogs'); localStorage.removeItem('louisaClassroomRoster'); localStorage.removeItem('louisaNotifiedOptions'); localStorage.removeItem('louisaClassroomTemplates'); localStorage.removeItem('louisaClassroomTemplates_v2'); localStorage.removeItem('louisaClassroomTemplates_v3'); localStorage.removeItem('louisaClassroomTemplates_v4'); localStorage.removeItem('louisaClassroomStudentCount'); localStorage.removeItem('louisaGradeOptions');
+          alert('🧹 資料已徹底清除。');
+        }
+      };
+
+      const handleExportExcel = () => {
+        let csvContent = '\uFEFF日期,星期,節次,年級,座號,姓名,類型,事件細項,通知對象,內容,紀錄教師\n';
+        const data = filterSeat ? logs.filter(log => log.seatNumber?.split(', ').includes(filterSeat)) : logs;
+        [...data].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(log => {
+          const row = [log.date, getWeekday(log.date), log.period || '', log.grade || '', `"${log.seatNumber || ''}"`, `"${log.student || ''}"`, log.type === 'incident' ? '偶發事件' : '一般班務', `"${log.incidentCategories?.join('、') || ''}"`, `"${log.notifiedParties?.join('、') || ''}"`, `"${(log.content || '').replace(/"/g, '""')}"`, log.teacher || ''];
+          csvContent += row.join(",") + "\n";
+        });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob); link.download = `親師聯絡&輔導手札_${filterSeat ? `${filterSeat}號` : '總表'}_${new Date().toISOString().split('T')[0]}.csv`; link.click();
+      };
+
+      const handleExportWord = () => {
+        if (selectedForExport.length === 0) return alert('請先勾選要匯出的項目。');
+        const exportData = logs.filter(log => selectedForExport.includes(log.id)).sort((a, b) => new Date(a.date) - new Date(b.date));
+        let htmlContent = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset="utf-8"><title>輔導記錄表</title><style>body { font-family: "BiauKai", "標楷體", sans-serif; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid black; padding: 6px; text-align: center; font-size: 12pt; } .c-left { text-align: left; vertical-align: top; }</style></head><body><table border="1" cellspacing="0" cellpadding="5"><tr><th rowspan="${exportData.length + 2}" style="width:35px;font-size:16pt;letter-spacing:5px">重<br/>要<br/>輔<br/>導<br/>記<br/>錄</th><th rowspan="2">年<br/>級</th><th colspan="5">日　　期</th><th rowspan="2">座<br/>號</th><th rowspan="2">姓<br/>名</th><th rowspan="2" style="width:35%">輔　導　內　容　要　點</th><th rowspan="2">導<br/>師</th><th rowspan="2">輔<br/>導<br/>室</th></tr><tr><th>年</th><th>月</th><th>日</th><th>星期</th><th>節次</th></tr>`;
+        exportData.forEach((log) => {
+          const d = new Date(log.date);
+          htmlContent += `<tr><td>${log.grade||''}</td><td>${d.getFullYear()-1911}</td><td>${d.getMonth()+1}</td><td>${d.getDate()}</td><td>${getWeekday(log.date)}</td><td>${log.period||''}</td><td>${log.seatNumber||''}</td><td>${log.student}</td><td class="c-left">${log.incidentCategories?.length ? `<strong>【${log.incidentCategories.join('、')}】</strong><br/>` : ''}${log.notifiedParties?.length ? `<span style="color:#666">[通知對象：${log.notifiedParties.join('、')}]</span><br/><br/>` : (log.incidentCategories?.length?'<br/>':'')}${log.content.replace(/\n/g, '<br/>')}</td><td></td><td></td></tr>`;
+        });
+        htmlContent += `</table></body></html>`;
+        const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' }); const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob); link.download = `輔導記錄表_${new Date().toISOString().split('T')[0]}.doc`; link.click();
+      };
+
+      const handleCategoryChange = (e) => {
+        const val = e.target.value;
+        if (val === 'custom_new_category') {
+          const newCat = prompt('請輸入「新分類」的名稱：');
+          if (newCat && newCat.trim() && !templates[newCat]) {
+            setTemplates(prev => ({...prev, [newCat.trim()]: []}));
+            setContactCategory(newCat.trim());
+          } else if (newCat && templates[newCat]) {
+            alert('此分類已經存在！');
+            setContactCategory(newCat);
+          } else {
+            setContactCategory(Object.keys(templates)[0] || '');
+          }
+        } else {
+          setContactCategory(val);
+        }
+        setContactSelectedTemplateIdx('');
+        setContactDraft('');
+      };
+
+      const handleSelectContactTemplate = (e) => {
+        const val = e.target.value;
+        setContactSelectedTemplateIdx(val);
+        if (val === '') {
+          setContactDraft('');
+          return;
+        } else if (val === 'custom_new_template') {
+          setContactDraft('');
+          return;
+        }
+
+        const template = templates[contactCategory][val];
+        
+        // 處理「結語」附加邏輯 (移除自動帶入 導師敬上)
+        if (contactCategory.includes('結語')) {
+          setContactDraft(`${contactDraft ? contactDraft + '\n\n' : ''}${template}`);
+          return;
+        }
+
+        let prefix = '親愛的家長您好，\n\n';
+        if (contactSeat) {
+          const names = contactSeat.split(', ').map(s => roster[s] || s).filter(Boolean).join('、');
+          prefix = `家長您好，${names} `;
+        } else if (contactCategory.includes('班級') || contactCategory.includes('通知')) {
+          prefix = '各位家長好，\n\n';
+        }
+        
+        // 只帶入前綴與樣板內容，不加 導師敬上
+        setContactDraft(`${prefix}${template}`);
+      };
+
+      const handleSaveAsTemplate = () => {
+         if(!contactDraft.trim()) return alert('請先在下方編輯區輸入內容！');
+         const confirmMsg = prompt('請確認要儲存的語錄內容\n(建議移除開頭稱呼，以利日後重複套用)：', contactDraft);
+         if(confirmMsg && confirmMsg.trim()) {
+             const newTemplates = {...templates};
+             if(!newTemplates[contactCategory]) newTemplates[contactCategory] = [];
+             newTemplates[contactCategory].push(confirmMsg.trim());
+             setTemplates(newTemplates);
+             alert(`✅ 已成功將此內容加入「${contactCategory}」的常用語錄中！`);
+             setContactSelectedTemplateIdx(String(newTemplates[contactCategory].length - 1));
+         }
+      };
+
+      const copyToClipboard = () => {
+        if (!contactDraft.trim()) return false;
+        const textArea = document.createElement("textarea");
+        textArea.value = contactDraft;
+        document.body.appendChild(textArea);
+        textArea.select();
+        let success = false;
+        try {
+          success = document.execCommand('copy');
+          setIsCopied(true);
+          setTimeout(() => setIsCopied(false), 2000);
+        } catch (err) { console.error('複製失敗', err); }
+        document.body.removeChild(textArea);
+        return success;
+      };
+
+      const handleCopyAndSaveLog = (silent = false) => {
+        if (!contactDraft.trim()) {
+            if(!silent) alert('請先產生或輸入訊息內容！');
+            return false;
+        }
+        
+        copyToClipboard();
+
+        let studentName = '全班';
+        let notified = ['父', '母']; 
+        if (contactCategory.includes('班級') || contactCategory.includes('通知')) {
+          notified = []; 
+        } else if (contactSeat) {
+          studentName = contactSeat.split(', ').map(s => roster[s] || s).filter(Boolean).join(', ');
+        }
+
+        const newContactLog = {
+          id: Date.now(),
+          date: new Date().toISOString().split('T')[0],
+          period: '',
+          grade: newLog.grade,
+          seatNumber: contactSeat || '',
+          type: 'general',
+          incidentCategories: [],
+          notifiedParties: notified,
+          student: studentName,
+          content: `【親師聯繫紀錄 - ${contactCategory}】\n已發送訊息內容：\n${contactDraft}`,
+          teacher: newLog.teacher
+        };
+
+        setLogs(prev => [newContactLog, ...prev]);
+        if(!silent) alert('✅ 訊息已成功複製至剪貼簿！\n\n💾 且已同步將此紀錄存入「紀錄閱覽」中。');
+        return true;
+      };
+
+      const handleSendToLine = () => {
+         if(handleCopyAndSaveLog(true)) {
+             window.open(`https://line.me/R/msg/text/?${encodeURIComponent(contactDraft)}`, '_blank');
+         }
+      };
+
+      const handleSendToLineOA = () => {
+         if(handleCopyAndSaveLog(true)) {
+             alert('✅ 內容已複製並自動存入手札。\n\n即將嘗試開啟「LINE 官方帳號」App，請於聊天室手動貼上發送！');
+             window.location.href = "lineat://"; 
+         }
+      };
+
+      const handleSendToSMS = () => {
+         if(handleCopyAndSaveLog(true)) {
+             const ua = navigator.userAgent.toLowerCase();
+             const isIOS = /iphone|ipad|ipod/.test(ua);
+             const prefix = isIOS ? 'sms:&body=' : 'sms:?body=';
+             window.location.href = prefix + encodeURIComponent(contactDraft);
+         }
+      };
+
+      // 處理自訂年級
+      const handleGradeChange = (e, isEdit = false) => {
+        const val = e.target.value;
+        if (val === 'custom_new_grade') {
+          const newGrade = prompt('請輸入「新年級/班級」的名稱（例如：八上、高一忠）：');
+          if (newGrade && newGrade.trim()) {
+            const trimmed = newGrade.trim();
+            if (!gradeOptions.includes(trimmed)) {
+              setGradeOptions([...gradeOptions, trimmed]);
+            }
+            if (isEdit) setEditingLog({...editingLog, grade: trimmed});
+            else setNewLog({...newLog, grade: trimmed});
+          }
+        } else {
+          if (isEdit) setEditingLog({...editingLog, grade: val});
+          else setNewLog({...newLog, grade: val});
+        }
+      };
+
+      // --- 視覺設計配置 ---
+      const macaronTabs = [
+        { id: 'guide', icon: BookOpen, label: '說明', bg: '#D5E8D4' },
+        { id: 'add', icon: Plus, label: '撰寫', bg: '#FFB7B2' },
+        { id: 'contact', icon: MessageCircle, label: '聯繫', bg: '#FFDAC1' },
+        { id: 'list', icon: FileText, label: '閱覽', bg: '#B5EAD7' },
+        { id: 'export', icon: Download, label: '匯出', bg: '#FFF5BA' },
+        { id: 'settings', icon: Settings, label: '設定', bg: '#C7CEEA' }
+      ];
+
+      return (
+        <div className="min-h-screen text-[#3E2C20] font-sans selection:bg-[#D5C8BA] selection:text-[#3E2C20] flex flex-col">
+          
+          <header className="sticky top-0 z-30 pt-6 pb-6 px-4 border-b-4 border-[#D5C8BA] bg-[#F4EDE4]/95 backdrop-blur-md shadow-sm">
+            <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+              <h1 className="text-2xl font-black text-[#3E2C20] tracking-widest flex items-center gap-3 shrink-0">
+                <div className="w-11 h-11 bg-[#FFFBF5] border-[3px] border-[#5C3A21] rounded-xl grid grid-cols-2 gap-1 p-1 shadow-[4px_4px_0_#5C3A21] shrink-0 transition-transform hover:scale-105">
+                  <div className="rounded-full bg-[#FFB7B2] border-[1.5px] border-[#5C3A21] shadow-[1.5px_1.5px_0_#5C3A21]"></div>
+                  <div className="rounded-full bg-[#B5EAD7] border-[1.5px] border-[#5C3A21] shadow-[1.5px_1.5px_0_#5C3A21]"></div>
+                  <div className="rounded-full bg-[#FFF5BA] border-[1.5px] border-[#5C3A21] shadow-[1.5px_1.5px_0_#5C3A21]"></div>
+                  <div className="rounded-full bg-[#C7CEEA] border-[1.5px] border-[#5C3A21] shadow-[1.5px_1.5px_0_#5C3A21]"></div>
+                </div>
+                親師聯絡&輔導手札
+              </h1>
+              
+              <nav className="flex gap-3 w-full md:w-auto overflow-x-auto pb-3 pt-1 px-2 custom-scrollbar">
+                {macaronTabs.map(tab => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} 
+                      className={`macaron-btn flex-shrink-0 whitespace-nowrap py-3.5 px-5 rounded-2xl flex justify-center items-center gap-2 text-xl font-black tracking-widest ${isActive ? 'macaron-btn-active' : 'macaron-btn-idle'}`}
+                      style={{ backgroundColor: tab.bg }}>
+                      <tab.icon size={22} strokeWidth={3} /> <span>{tab.label}</span>
+                    </button>
+                  )
+                })}
+              </nav>
+            </div>
+          </header>
+
+          <main className="max-w-4xl mx-auto p-4 sm:p-6 mt-4 flex-1 w-full">
+            
+            {/* === 說明書 Tab === */}
+            {activeTab === 'guide' && (
+              <div className="animate-fade-in space-y-6">
+                <div className="bg-[#FFFBF5] border-2 border-[#EADDCE] rounded-3xl p-6 sm:p-8 shadow-lg relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-6 opacity-10 text-[#8B5A2B] pointer-events-none">
+                    <BookOpen size={150} />
+                  </div>
+                  <h2 className="text-2xl font-black tracking-widest text-[#5C3A21] mb-2 flex items-center gap-2 relative z-10">
+                    <Lightbulb className="text-[#F5B041]" size={28}/> 歡迎使用親師聯絡&輔導手札
+                  </h2>
+                  <p className="text-[#8C7A6B] font-bold text-[15px] leading-relaxed mb-6 relative z-10 max-w-2xl">
+                    這是一款專為教育工作者量身打造的行動數位工具。將繁雜的班務紀錄、偶發事件建檔、以及親師溝通，完美整合在一個系統中。所有的資料皆**自動加密儲存於您的設備**，無需登入、絕對安全。
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 relative z-10">
+                    <div className="guide-card bg-white border-2 border-[#D5E8D4] p-5 rounded-2xl transition-all duration-300">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="bg-[#D5E8D4] p-2 rounded-xl text-[#2D423D]"><MessageCircle size={24}/></div>
+                        <h3 className="text-lg font-black text-[#2D423D]">神速溝通：親師聯繫</h3>
+                      </div>
+                      <p className="text-[#5C4535] text-sm leading-relaxed mb-4">
+                        點選 <span className="px-2 py-0.5 bg-[#FFDAC1] text-[#5C3A21] rounded-md font-bold text-xs mx-1">聯繫</span> 分頁，您可以建立專屬的「語錄庫」。<br/>
+                        ✔ 支援**多選學生**，自動合併姓名套入語錄。<br/>
+                        ✔ 一鍵跳轉至 **LINE**、**LINE 官方帳號**或 **iOS 訊息**。<br/>
+                        ✔ 發送當下，系統自動將對話存入日誌，免重複打字。
+                      </p>
+                      <div className="bg-[#F8FAF8] border border-[#C3D8C2] rounded-lg p-3 flex items-center justify-between text-xs font-bold text-[#2D423D]">
+                        <span>選對象 ➜ 選語錄 ➜ 發送並紀錄</span>
+                        <Zap size={16} className="text-yellow-500"/>
+                      </div>
+                    </div>
+
+                    <div className="guide-card bg-white border-2 border-[#FFDAC1] p-5 rounded-2xl transition-all duration-300">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="bg-[#FFB7B2] p-2 rounded-xl text-[#5E2B29]"><Plus size={24}/></div>
+                        <h3 className="text-lg font-black text-[#5E2B29]">滴水不漏：撰寫紀錄</h3>
+                      </div>
+                      <p className="text-[#5C4535] text-sm leading-relaxed mb-4">
+                        點選 <span className="px-2 py-0.5 bg-[#FFB7B2] text-[#5E2B29] rounded-md font-bold text-xs mx-1">撰寫</span> 分頁，快速建檔學生的在校狀況。<br/>
+                        ✔ 區分「一般班務」與「偶發事件」。<br/>
+                        ✔ 內建 16 種教育部標準偶發分類（可複選）。<br/>
+                        ✔ 支援自訂並記憶「通知對象」（如：特教老師）。
+                      </p>
+                      <div className="flex gap-2">
+                        <span className="bg-[#FADBD8] text-[#C84B31] px-2 py-1 rounded text-xs font-bold">13.偏差行為</span>
+                        <span className="bg-[#E8EAF6] text-[#3A4168] px-2 py-1 rounded text-xs font-bold">通知: 專輔老師</span>
+                      </div>
+                    </div>
+
+                    <div className="guide-card bg-white border-2 border-[#FFF5BA] p-5 rounded-2xl transition-all duration-300">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="bg-[#FFF5BA] p-2 rounded-xl text-[#635515]"><Download size={24}/></div>
+                        <h3 className="text-lg font-black text-[#635515]">正式報表：輔導匯出</h3>
+                      </div>
+                      <p className="text-[#5C4535] text-sm leading-relaxed mb-4">
+                        不想期末熬夜打表單？<br/>
+                        在 <span className="px-2 py-0.5 bg-[#FFF5BA] text-[#635515] rounded-md font-bold text-xs mx-1">匯出</span> 分頁，您可以勾選特定學生的重要事件，系統會自動轉換成**標準公文格式**的 `.doc` 檔案（標楷體、表格化），直接交給學務處！也能一鍵匯出全班的 Excel 總表。
+                      </p>
+                      <div className="text-right"><span className="text-xs text-[#635515] font-black underline flex justify-end items-center gap-1">支援手機直接預覽與分享 <ArrowRight size={14}/></span></div>
+                    </div>
+
+                    <div className="guide-card bg-white border-2 border-[#C7CEEA] p-5 rounded-2xl transition-all duration-300">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="bg-[#C7CEEA] p-2 rounded-xl text-[#3A4168]"><Settings size={24}/></div>
+                        <h3 className="text-lg font-black text-[#3A4168]">無痛上手：設定與名單</h3>
+                      </div>
+                      <p className="text-[#5C4535] text-sm leading-relaxed mb-4">
+                        前往 <span className="px-2 py-0.5 bg-[#C7CEEA] text-[#3A4168] rounded-md font-bold text-xs mx-1">設定</span> 分頁，第一步請先建立名單：<br/>
+                        ✔ 支援**自訂班級總人數**（無上限）。<br/>
+                        ✔ 從 Excel 複製姓名「批次貼上」，1秒建檔。<br/>
+                        ✔ 提供完整資料的 JSON 備份與還原功能。
+                      </p>
+                      <button onClick={() => setActiveTab('settings')} className="w-full py-2 bg-[#F4EDE4] border border-[#D5C8BA] rounded-lg text-sm font-black text-[#5C3A21] hover:bg-[#EADDCE]">
+                        立即前往設定名單
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* === 親師聯繫 Tab === */}
+            {activeTab === 'contact' && (
+              <div className="bg-[#FFFBF5] border-2 border-[#EADDCE] rounded-3xl p-5 sm:p-8 shadow-lg animate-fade-in space-y-5">
+                <div className="mb-2 flex justify-between items-end border-b-2 border-[#EADDCE] pb-4">
+                  <h2 className="text-xl font-black tracking-widest text-[#5C3A21] flex items-center gap-2">
+                    <MessageCircle className="text-[#FFDAC1] fill-[#D9A382]" size={28}/> 親師聯繫小幫手
+                  </h2>
+                </div>
+                
+                <p className="text-[#8C7A6B] font-bold text-sm mb-4 leading-relaxed">
+                  點選學生與情境，系統將自動套用語錄。您也可以在下方編輯區手動打字，並隨手將新內容「儲存為自訂語錄」。發送時系統會自動幫您做紀錄！
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                  <div className="md:col-span-2 space-y-5">
+                    <div className="bg-[#F4EDE4] border-2 border-[#D5C8BA] rounded-xl p-4 shadow-sm">
+                      <label className="block text-sm text-[#8B5A2B] font-black mb-3">1. 選擇聯繫對象 (支援複選)</label>
+                      <button type="button" onClick={() => openStudentModal('contact')} className="w-full bg-white border-2 border-[#D5C8BA] rounded-xl p-3.5 text-lg font-black text-[#5C3A21] flex justify-between items-center hover:border-[#8B5A2B] shadow-sm transition-colors text-left">
+                        <span className="truncate flex-1">
+                          {contactSeat ? `已選：${contactSeat.split(', ').map(s => roster[s] || s).join('、')}` : '📢 全班 (不載入姓名)'}
+                        </span>
+                        <Users size={20} className="text-[#8B5A2B] flex-shrink-0 ml-2" />
+                      </button>
+                    </div>
+                    <div className="bg-[#F4EDE4] border-2 border-[#D5C8BA] rounded-xl p-4 shadow-sm">
+                      <label className="block text-sm text-[#8B5A2B] font-black mb-3">2. 選擇通知分類</label>
+                      <select value={contactCategory} onChange={handleCategoryChange} className="w-full bg-white border-2 border-[#D5C8BA] rounded-xl p-3.5 text-lg font-black text-[#5C3A21] outline-none focus:border-[#8B5A2B] shadow-sm cursor-pointer appearance-none">
+                        {Object.keys(templates).map(category => (
+                          <option key={category} value={category}>{category}</option>
+                        ))}
+                        <option disabled>──────────</option>
+                        <option value="custom_new_category">➕ 自訂功能 (新增分類)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-3 space-y-5">
+                    <div className="border-2 border-[#D5C8BA] bg-white rounded-xl p-4 shadow-sm">
+                      <label className="block text-sm text-[#8B5A2B] font-black mb-3">3. 選擇所需語錄帶入下方</label>
+                      <select value={contactSelectedTemplateIdx} onChange={handleSelectContactTemplate} className="w-full bg-white border-2 border-[#D5C8BA] rounded-xl p-3.5 text-lg font-black text-[#5C3A21] outline-none focus:border-[#8B5A2B] shadow-sm cursor-pointer appearance-none">
+                        <option value="">請點此選擇一則語錄...</option>
+                        {templates[contactCategory]?.map((template, idx) => (
+                          <option key={idx} value={idx}>{template.substring(0, 22)}{template.length > 22 ? '...' : ''}</option>
+                        ))}
+                        <option disabled>──────────</option>
+                        <option value="custom_new_template">✏️ 不使用範本，自行輸入新內容</option>
+                      </select>
+                    </div>
+
+                    <div className="border-2 border-[#D5C8BA] bg-[#FFFBF5] rounded-xl p-4 shadow-inner focus-within:border-[#D9A382] transition-colors relative">
+                      <div className="flex flex-wrap justify-between items-center mb-3 gap-2">
+                        <label className="text-sm text-[#8B5A2B] font-black">4. 確認與編輯發送內容</label>
+                        <button onClick={handleSaveAsTemplate} className="text-xs bg-[#FFDAC1] text-[#5C3A21] font-bold px-3 py-1.5 rounded-lg border border-[#D9A382] hover:bg-[#D9A382] hover:text-white transition-colors flex items-center gap-1 shadow-sm">
+                          <Plus size={14}/> 儲存為本類別語錄
+                        </button>
+                      </div>
+                      <textarea value={contactDraft} onChange={(e) => setContactDraft(e.target.value)} rows="5" placeholder="您可直接在此方塊內修改文字，確認無誤後再點擊下方按鈕發送。"
+                        className="w-full bg-white border-2 border-[#EADDCE] p-3 rounded-lg outline-none text-[16px] font-bold leading-relaxed resize-y text-[#3E2C20] placeholder-[#D5C8BA]"></textarea>
+                      
+                      <div className="flex flex-col gap-3 pt-4 mt-2 border-t-2 border-[#EADDCE]">
+                        <button onClick={() => handleCopyAndSaveLog(false)} disabled={!contactDraft}
+                          className="action-btn w-full bg-[#5C8AE6] text-white py-3.5 rounded-xl font-black text-[17px] tracking-wide shadow-md border-b-4 border-[#3D6BBA] active:border-b-0 active:translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                          {isCopied ? <CheckCircle2 size={20}/> : <Copy size={20}/>} 
+                          {isCopied ? '已複製並記錄' : '📋 複製文字 (並存入紀錄)'}
+                        </button>
+                        <button onClick={handleSendToLine} disabled={!contactDraft}
+                          className="action-btn w-full bg-[#5CC864] text-white py-3.5 rounded-xl font-black text-[17px] tracking-wide shadow-md border-b-4 border-[#3D9B42] active:border-b-0 active:translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                          <Send size={20}/> 💬 發送至 LINE (跳轉 App)
+                        </button>
+                        <button onClick={handleSendToLineOA} disabled={!contactDraft}
+                          className="action-btn w-full bg-[#3B7A4B] text-white py-3.5 rounded-xl font-black text-[17px] tracking-wide shadow-md border-b-4 border-[#275232] active:border-b-0 active:translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                          <Smartphone size={20}/> 🤖 發送至 LINE 官方帳號
+                        </button>
+                        <button onClick={handleSendToSMS} disabled={!contactDraft}
+                          className="action-btn w-full bg-[#4A90E2] text-white py-3.5 rounded-xl font-black text-[17px] tracking-wide shadow-md border-b-4 border-[#357ABD] active:border-b-0 active:translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                          <MessageSquare size={20}/> ✉️ 發送至 iOS 訊息 (iMessage/簡訊)
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* === 撰寫日誌 Tab === */}
+            {activeTab === 'add' && (
+              <div className="bg-[#FFFBF5] border-2 border-[#EADDCE] rounded-3xl p-6 sm:p-8 shadow-lg animate-fade-in">
+                <div className="mb-6 flex justify-between items-end border-b-2 border-[#EADDCE] pb-4">
+                  <h2 className="text-xl font-black tracking-widest text-[#5C3A21]">📝 新增一般紀錄</h2>
+                </div>
+                <form onSubmit={handleAddLog} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+                    <div className="md:col-span-1 border-2 border-[#D5C8BA] bg-white rounded-xl p-3 relative focus-within:border-[#8B5A2B] transition-colors shadow-sm">
+                      <label className="block text-sm text-[#8B5A2B] font-bold mb-1 tracking-wider">日期 Date</label>
+                      <input type="date" value={newLog.date} onChange={(e) => setNewLog({...newLog, date: e.target.value})} className="w-full bg-transparent outline-none text-lg font-bold text-[#3E2C20] py-1" />
+                    </div>
+                    <div className="md:col-span-1 border-2 border-[#D5C8BA] bg-white rounded-xl p-3 focus-within:border-[#8B5A2B] transition-colors shadow-sm">
+                      <label className="block text-sm text-[#8B5A2B] font-bold mb-1 tracking-wider">節次 Period</label>
+                      <select value={newLog.period} onChange={(e) => setNewLog({...newLog, period: e.target.value})} className="w-full bg-transparent outline-none text-lg font-bold text-[#3E2C20] appearance-none py-1 cursor-pointer">
+                        <option value="">選擇節次</option>{periodOptions.map(p => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                    </div>
+                    <div className="md:col-span-2 border-2 border-[#D5C8BA] bg-white rounded-xl p-3 shadow-sm">
+                      <label className="block text-sm text-[#8B5A2B] font-bold mb-2 tracking-wider">紀錄性質 Type</label>
+                      <div className="flex gap-6 pt-1">
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${newLog.type === 'general' ? 'border-[#8B5A2B] bg-[#F4EDE4]' : 'border-[#D5C8BA]'}`}>
+                            {newLog.type === 'general' && <div className="w-2.5 h-2.5 rounded-full bg-[#8B5A2B]" />}
+                          </div>
+                          <input type="radio" name="type" className="hidden" onChange={() => setNewLog({...newLog, type: 'general'})} />
+                          <span className={`text-base ${newLog.type === 'general' ? 'font-black text-[#8B5A2B]' : 'text-[#8C7A6B] font-bold'}`}>日常班務</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${newLog.type === 'incident' ? 'border-[#C84B31] bg-[#FADBD8]' : 'border-[#D5C8BA]'}`}>
+                            {newLog.type === 'incident' && <div className="w-2.5 h-2.5 rounded-full bg-[#C84B31]" />}
+                          </div>
+                          <input type="radio" name="type" className="hidden" onChange={() => setNewLog({...newLog, type: 'incident'})} />
+                          <span className={`text-base flex items-center gap-1 ${newLog.type === 'incident' ? 'font-black text-[#C84B31]' : 'text-[#8C7A6B] font-bold'}`}>偶發事件</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {newLog.type === 'incident' && (
+                    <div className="bg-[#FDF3F2] border-2 border-[#EBB6AF] p-5 rounded-xl shadow-inner">
+                      <label className="block text-sm text-[#C84B31] mb-3 font-black flex items-center gap-1 tracking-wider"><AlertCircle size={16} /> 偶發類別 Category</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-3 gap-x-2">
+                        {incidentCategoryOptions.map(cat => (
+                          <div key={cat} onClick={() => toggleCategory(cat, 'new')} className="flex items-start gap-2 cursor-pointer group">
+                            <div className="mt-0.5 shrink-0 transition-colors">{newLog.incidentCategories?.includes(cat) ? <CheckSquare size={18} className="text-[#C84B31]" /> : <Square size={18} className="text-[#EBB6AF]"/>}</div>
+                            <span className={`text-sm leading-snug ${newLog.incidentCategories?.includes(cat) ? 'text-[#C84B31] font-black' : 'text-[#A07068] font-bold'}`}>{cat}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col md:flex-row gap-5">
+                    <div className="md:w-1/4 border-2 border-[#D5C8BA] bg-white rounded-xl p-3 focus-within:border-[#8B5A2B] shadow-sm">
+                      <label className="block text-sm text-[#8B5A2B] font-bold mb-1">年級 Grade</label>
+                      <select value={newLog.grade} onChange={(e) => handleGradeChange(e, false)} className="w-full bg-transparent outline-none text-lg font-bold text-[#3E2C20] appearance-none py-1 cursor-pointer">
+                        {gradeOptions.map(g => <option key={g} value={g}>{g}</option>)}
+                        <option disabled>──────────</option>
+                        <option value="custom_new_grade">➕ 自訂年級 (新增)</option>
+                      </select>
+                    </div>
+                    <div className="md:w-3/4 border-2 border-[#D5C8BA] bg-white rounded-xl p-2 flex flex-col sm:flex-row gap-3 shadow-sm">
+                      <button type="button" onClick={() => openStudentModal('new')} className="flex-shrink-0 bg-[#EADDCE] hover:bg-[#D5C8BA] text-[#5C3A21] px-5 py-3 rounded-xl text-lg font-black flex items-center justify-center gap-2 border-b-4 border-[#C8B6A6] active:border-b-0 active:translate-y-1">
+                        <Users size={20}/> 選擇對象
+                      </button>
+                      <div className="flex-1 px-3 py-1">
+                         <label className="block text-[11px] text-[#A08C7D] font-bold tracking-widest mb-0.5">Selected Name</label>
+                         <input type="text" value={newLog.student} onChange={(e) => setNewLog({...newLog, student: e.target.value})} placeholder="點擊左側選擇，或手動輸入 (例: 全班)" className="w-full bg-transparent outline-none text-lg font-bold text-[#3E2C20]" />
+                         {newLog.seatNumber && <div className="text-xs text-[#8B5A2B] mt-1 font-bold">座號: {newLog.seatNumber}</div>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-2 border-[#D5C8BA] bg-white rounded-xl p-4 shadow-sm">
+                    <label className="block text-sm text-[#8B5A2B] font-bold mb-3 flex items-center gap-1.5"><Bell size={16} /> 通知對象</label>
+                    <div className="flex flex-wrap gap-2.5 items-center">
+                      {notifiedOptions.map(party => (
+                        <button key={party} type="button" onClick={() => toggleParty(party, 'new')} className={`px-3 py-1.5 rounded-lg text-sm font-bold border-2 flex items-center gap-1.5 ${newLog.notifiedParties?.includes(party) ? 'bg-[#C7CEEA] border-[#939DBE] text-[#3A4168]' : 'bg-[#F4EDE4] border-[#D5C8BA] text-[#8C7A6B]'}`}>
+                          {newLog.notifiedParties?.includes(party) ? <CheckSquare size={14}/> : <Square size={14}/>} {party}
+                        </button>
+                      ))}
+                      <div className="flex items-center gap-1 ml-2">
+                        <input type="text" value={customPartyInput} onChange={(e) => setCustomPartyInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddCustomParty(e, 'new')} placeholder="新增單位..." className="text-sm border-b-2 border-[#D5C8BA] outline-none bg-transparent px-2 py-1 w-28 focus:border-[#8B5A2B] font-bold text-[#5C3A21]" />
+                        <button type="button" onClick={(e) => handleAddCustomParty(e, 'new')} disabled={!customPartyInput.trim()} className="text-[#8B5A2B] p-1"><PlusCircle size={18} /></button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-2 border-[#D5C8BA] bg-white rounded-xl p-4 shadow-sm">
+                    <label className="block text-sm text-[#8B5A2B] font-bold mb-2">詳細經過與處理</label>
+                    <textarea value={newLog.content} onChange={(e) => setNewLog({...newLog, content: e.target.value})} rows="5" className="w-full bg-transparent outline-none text-base font-medium leading-relaxed resize-none text-[#3E2C20]"></textarea>
+                  </div>
+
+                  <div className="flex justify-end pt-4">
+                    <button type="submit" className="bg-[#8B5A2B] text-white px-8 py-3.5 rounded-xl hover:bg-[#5C3A21] text-lg font-black flex items-center gap-2 border-b-4 border-[#4A2E16] active:border-b-0 active:translate-y-1">
+                      <Save size={20}/> 儲存紀錄
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* === 紀錄閱覽 Tab === */}
+            {activeTab === 'list' && (
+              <div className="animate-fade-in">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b-2 border-[#D5C8BA] pb-4">
+                  <h2 className="text-xl font-black tracking-widest text-[#5C3A21]">📖 紀錄閱覽</h2>
+                  <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 bg-[#FFFBF5] border-2 border-[#D5C8BA] rounded-xl px-4 py-3.5 flex-1 sm:flex-none shadow-sm w-full sm:w-auto">
+                      <Filter size={20} className="text-[#8B5A2B] shrink-0"/>
+                      <select value={filterSeat} onChange={(e) => setFilterSeat(e.target.value)} className="bg-transparent text-lg font-black text-[#5C3A21] outline-none w-full cursor-pointer appearance-none">
+                        <option value="">全班 / 不分座號</option>{seatOptions.map(num => <option key={num} value={num}>{num}號 {roster[num] || ''}</option>)}
+                      </select>
+                    </div>
+                    <button onClick={handleExportExcel} className="flex items-center justify-center gap-2 px-6 py-3.5 bg-[#4A635D] text-white rounded-xl font-black border-b-4 border-[#2D423D] active:border-b-0 active:translate-y-1 w-full sm:w-auto text-lg shadow-sm"><FileSpreadsheet size={20} /><span>匯出 Excel</span></button>
+                  </div>
+                </div>
+
+                <div className="space-y-5">
+                  {logs.length === 0 ? <div className="text-center text-[#A08C7D] py-24 font-bold">📭 尚無紀錄。</div> : 
+                   (filterSeat ? logs.filter(l => l.seatNumber?.split(', ').includes(filterSeat)) : logs).sort((a,b)=>new Date(b.date)-new Date(a.date)).map(log => (
+                    <div key={log.id} className="bg-[#FFFBF5] border-2 border-[#EADDCE] rounded-2xl p-5 relative shadow-sm">
+                      <div className={`absolute left-0 top-6 bottom-6 w-1.5 rounded-r-full ${log.type === 'incident' ? 'bg-[#C84B31]' : 'bg-[#8B5A2B]'}`}></div>
+                      <div className="flex justify-between items-start mb-4 pl-4">
+                        <div className="flex flex-wrap items-baseline gap-3">
+                          <span className="font-black text-xl text-[#3E2C20]">{log.date.replace(/-/g, '.')}</span>
+                          <span className="text-[#A08C7D] text-sm font-bold">{getWeekday(log.date)} {log.period && `· ${log.period}`}</span>
+                          <div className="flex items-center gap-2 ml-2">
+                            <span className="px-2 py-0.5 bg-[#EADDCE] text-[#5C3A21] rounded-md text-sm font-black border border-[#D5C8BA]">{log.grade}</span>
+                            <span className="font-black text-[#3E2C20]">{log.seatNumber && <span className="text-[#A08C7D] font-mono mr-1 text-sm">#{log.seatNumber}</span>}{log.student}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          <button onClick={() => setEditingLog({...log})} className="text-[#D5C8BA] hover:text-[#8B5A2B] p-2"><Edit2 size={18}/></button>
+                          <button onClick={() => handleDelete(log.id)} className="text-[#D5C8BA] hover:text-[#C84B31] p-2"><Trash2 size={20}/></button>
+                        </div>
+                      </div>
+                      {log.type === 'incident' && log.incidentCategories?.length > 0 && <div className="flex flex-wrap gap-2 mb-4 pl-4">{log.incidentCategories.map(cat => <span key={cat} className="text-xs px-2.5 py-1 bg-[#FADBD8] text-[#C84B31] border border-[#EBB6AF] rounded-lg font-black">{cat}</span>)}</div>}
+                      {log.notifiedParties?.length > 0 && <div className="flex flex-wrap gap-2 mb-4 pl-4 items-center"><Bell size={14} className="text-[#939DBE]" />{log.notifiedParties.map(p => <span key={p} className="text-xs px-2 py-0.5 bg-[#E8EAF6] text-[#3A4168] rounded-md font-bold">{p}</span>)}</div>}
+                      <p className="text-[#5C4535] text-base font-medium leading-relaxed whitespace-pre-wrap pl-4 break-words">{log.content}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* === 輔導匯出 Tab === */}
+            {activeTab === 'export' && (
+              <div className="animate-fade-in">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b-2 border-[#D5C8BA] pb-4">
+                  <h2 className="text-xl font-black tracking-widest text-[#5C3A21]">🖨️ 輔導匯出</h2>
+                  <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 bg-[#FFFBF5] border-2 border-[#D5C8BA] rounded-xl px-4 py-3.5 flex-1 sm:flex-none shadow-sm w-full sm:w-auto">
+                      <Filter size={20} className="text-[#8B5A2B] shrink-0"/>
+                      <select value={exportFilterSeat} onChange={(e) => setExportFilterSeat(e.target.value)} className="bg-transparent text-lg font-black text-[#5C3A21] outline-none w-full cursor-pointer appearance-none">
+                        <option value="">全班 / 不分座號</option>{seatOptions.map(num => <option key={num} value={num}>{num}號 {roster[num]||''}</option>)}
+                      </select>
+                    </div>
+                    <button onClick={handleExportWord} disabled={selectedForExport.length===0} className={`flex items-center justify-center gap-2 px-6 py-3.5 text-lg font-black rounded-xl border-b-4 w-full sm:w-auto shadow-sm ${selectedForExport.length===0?'bg-[#EADDCE] text-[#A08C7D] border-[#D5C8BA]':'bg-[#2A5243] text-white border-[#1A382D] active:translate-y-1 active:border-b-0'}`}><Download size={20}/> <span className="whitespace-nowrap">匯出 Word</span></button>
+                  </div>
+                </div>
+                 <div className="space-y-4">
+                  {logs.filter(l => l.type === 'incident' && (!exportFilterSeat || l.seatNumber?.split(', ').includes(exportFilterSeat))).map(log => (
+                      <div key={log.id} onClick={() => setSelectedForExport(prev => prev.includes(log.id)?prev.filter(id=>id!==log.id):[...prev,log.id])} className={`cursor-pointer border-2 rounded-2xl p-5 flex gap-4 items-start ${selectedForExport.includes(log.id) ? 'border-[#8B5A2B] bg-[#FFFBF5]' : 'border-[#EADDCE] bg-white'}`}>
+                        <div className="mt-1">{selectedForExport.includes(log.id) ? <CheckSquare size={22} className="text-[#8B5A2B]" /> : <Square size={22} className="text-[#D5C8BA]"/>}</div>
+                        <div className="flex-1">
+                          <div className="font-black text-lg text-[#3E2C20] mb-2">{log.date.replace(/-/g, '.')} {log.seatNumber && <span className="text-[#A08C7D] font-mono text-sm">#{log.seatNumber}</span>}{log.student}</div>
+                          <p className="text-[#7A6455] text-sm font-medium line-clamp-2">{log.content}</p>
+                        </div>
+                      </div>
+                  ))}
+                 </div>
+              </div>
+            )}
+
+            {/* === 設定與管理 Tab === */}
+            {activeTab === 'settings' && (
+              <div className="animate-fade-in space-y-8">
+                 <div className="mb-6 border-b-2 border-[#D5C8BA] pb-4"><h2 className="text-xl font-black text-[#5C3A21]">⚙️ 設定與資料管理</h2></div>
+                 
+                 <div className="bg-[#FFFBF5] border-2 border-[#EADDCE] rounded-3xl p-6 shadow-sm">
+                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
+                     <h3 className="text-lg font-black text-[#8B5A2B] flex items-center gap-2"><Users size={20}/> 編輯班級名單</h3>
+                     
+                     <div className="flex items-center gap-2 bg-[#F4EDE4] border-2 border-[#D5C8BA] px-3 py-1.5 rounded-xl">
+                       <span className="text-sm font-black text-[#5C3A21]">班級總人數：</span>
+                       <input 
+                         type="number" min="1" max="150" 
+                         value={studentCount} 
+                         onChange={(e) => setStudentCount(Number(e.target.value) || 1)} 
+                         className="w-16 bg-white border-2 border-[#D5C8BA] text-center font-bold outline-none focus:border-[#8B5A2B] rounded-lg py-0.5" 
+                       />
+                     </div>
+                   </div>
+
+                   <div className="mb-6 border-b-2 border-dashed border-[#D5C8BA] pb-6">
+                     <p className="text-sm font-bold text-[#8C7A6B] mb-3">✏️ 批次貼上名單 (自動分配座號，超出目前人數會自動擴充)：</p>
+                     <div className="flex gap-2">
+                       <textarea value={batchImportText} onChange={e=>setBatchImportText(e.target.value)} placeholder="每行貼上一個名字，例如：&#10;周杰倫&#10;王力宏" className="flex-1 border-2 border-[#D5C8BA] rounded-xl p-4 outline-none font-bold text-base h-24 custom-scrollbar"></textarea>
+                       <button onClick={handleBatchImport} className="bg-[#8B5A2B] text-white px-6 rounded-xl font-black hover:bg-[#5C3A21] whitespace-nowrap text-lg">開始<br/>匯入</button>
+                     </div>
+                   </div>
+
+                   <p className="text-sm font-bold text-[#8C7A6B] mb-3">✏️ 手動修改個別座號：</p>
+                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar pb-2">
+                     {seatOptions.map(seat => (
+                       <div key={seat} className="flex items-center gap-3 border-2 border-[#D5C8BA] bg-white rounded-xl p-3.5 shadow-sm focus-within:border-[#8B5A2B] transition-colors">
+                         <span className="text-[#A08C7D] font-mono text-base font-bold w-8 text-right shrink-0">{seat}.</span>
+                         <input type="text" value={roster[seat] || ''} onChange={(e) => setRoster({...roster, [seat]: e.target.value})} className="w-full outline-none font-black text-lg text-[#5C3A21]" placeholder="輸入姓名" />
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+
+                 <div className="bg-[#FFFBF5] border-2 border-[#EADDCE] rounded-3xl p-6 shadow-sm">
+                    <h3 className="text-lg font-black flex gap-2 mb-4 text-[#8B5A2B]"><MessageCircle size={20}/> 語錄管理台 (進階)</h3>
+                    <p className="text-sm font-bold text-[#8C7A6B] mb-4">除在發送頁面隨手新增外，您也可以在此統整管理所有分類與語錄內容。</p>
+                    <div className="flex flex-col sm:flex-row gap-4 mb-5">
+                      <div className="flex-1 bg-white border-2 border-[#D5C8BA] rounded-xl p-3 shadow-sm">
+                        <select value={settingManageCategory} onChange={(e) => setSettingManageCategory(e.target.value)} className="w-full bg-transparent outline-none text-base font-bold text-[#5C3A21]">
+                          {Object.keys(templates).map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button onClick={() => {
+                          const newCat = prompt('請輸入新的分類名稱：', settingManageCategory);
+                          if (newCat && newCat.trim() && newCat.trim() !== settingManageCategory) {
+                            const trimmed = newCat.trim();
+                            if (templates[trimmed]) return alert('此分類名稱已經存在！');
+                            const newTemplates = {...templates};
+                            newTemplates[trimmed] = newTemplates[settingManageCategory];
+                            delete newTemplates[settingManageCategory];
+                            setTemplates(newTemplates);
+                            setSettingManageCategory(trimmed);
+                            if(contactCategory === settingManageCategory) setContactCategory(trimmed);
+                          }
+                        }} className="bg-[#FFF5BA] text-[#635515] px-3 py-2.5 rounded-xl font-black border-b-4 border-[#D9C368] active:translate-y-1 hover:bg-[#FCE78E] whitespace-nowrap"><Edit2 size={16} className="inline mr-1"/>改名</button>
+                        <button onClick={() => {
+                          const newCat = prompt('請輸入新分類名稱：');
+                          if (newCat && newCat.trim() && !templates[newCat]) {
+                            setTemplates(prev => ({...prev, [newCat.trim()]: []})); setSettingManageCategory(newCat.trim()); if(!contactCategory) setContactCategory(newCat.trim());
+                          }
+                        }} className="bg-[#EADDCE] text-[#5C3A21] px-3 py-2.5 rounded-xl font-black border-b-4 border-[#C8B6A6] active:translate-y-1 hover:bg-[#D5C8BA] whitespace-nowrap"><Plus size={16} className="inline mr-1"/>新增</button>
+                        <button onClick={() => {
+                          if(Object.keys(templates).length <= 1) return alert('必須保留至少一個分類！');
+                          if(confirm(`確定要刪除「${settingManageCategory}」分類及其所有語錄嗎？`)) {
+                            const newTemplates = {...templates}; delete newTemplates[settingManageCategory]; setTemplates(newTemplates);
+                            const nextCat = Object.keys(newTemplates)[0] || ''; setSettingManageCategory(nextCat); setContactCategory(nextCat);
+                          }
+                        }} className="bg-white border-2 border-[#C84B31] text-[#C84B31] px-3 py-2.5 rounded-xl font-black hover:bg-[#FADBD8] whitespace-nowrap"><Trash2 size={16} className="inline mr-1"/>刪除</button>
+                      </div>
+                    </div>
+                    <div className="border-t-2 border-[#D5C8BA] pt-5">
+                       {templates[settingManageCategory]?.length === 0 ? <div className="text-center text-[#A08C7D] py-6 font-bold text-sm">此分類尚無語錄，請點擊下方按鈕新增。</div> : null}
+                       <div className="space-y-3 mb-4 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+                         {templates[settingManageCategory]?.map((tpl, idx) => (
+                           <div key={idx} className="flex gap-2">
+                             <textarea value={tpl} onChange={(e) => { const newTemplates = {...templates}; newTemplates[settingManageCategory][idx] = e.target.value; setTemplates(newTemplates); }} className="flex-1 border-2 border-[#EADDCE] rounded-xl p-3 outline-none text-sm leading-relaxed text-[#5C4535] focus:border-[#8B5A2B] resize-y min-h-[80px]"></textarea>
+                             <button onClick={() => { if(confirm('確定刪除此則語錄？')) { const newTemplates = {...templates}; newTemplates[settingManageCategory].splice(idx, 1); setTemplates(newTemplates); } }} className="text-[#D5C8BA] hover:text-[#C84B31] self-start mt-2 p-1"><X size={20}/></button>
+                           </div>
+                         ))}
+                       </div>
+                       <button onClick={() => {
+                         const newTemplates = {...templates};
+                         if(!newTemplates[settingManageCategory]) newTemplates[settingManageCategory] = [];
+                         newTemplates[settingManageCategory].push("");
+                         setTemplates(newTemplates);
+                       }} className="w-full bg-[#F4EDE4] text-[#8B5A2B] py-3 rounded-xl font-black border-2 border-[#D5C8BA] hover:bg-[#EADDCE] flex items-center justify-center gap-2"><Plus size={18}/> 新增一則空白語錄</button>
+                    </div>
+                 </div>
+
+                 <div className="bg-[#FFFBF5] border-2 border-[#EADDCE] rounded-3xl p-6 shadow-sm">
+                    <h3 className="text-lg font-black flex gap-2 mb-4 text-[#8B5A2B]"><Database size={20}/> 資料存檔管理</h3>
+                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                      <button onClick={handleBackupJSON} className="flex-1 bg-[#8B5A2B] text-white py-3 rounded-xl font-black border-b-4 border-[#4A2E16] active:translate-y-1"><Download className="inline mr-2" size={18}/>下載備份(JSON)</button>
+                      <button onClick={()=>fileInputRef.current.click()} className="flex-1 bg-[#EADDCE] text-[#5C3A21] py-3 rounded-xl font-black border-b-4 border-[#C8B6A6] active:translate-y-1"><Upload className="inline mr-2" size={18}/>上傳還原</button>
+                      <input type="file" accept=".json" ref={fileInputRef} onChange={handleRestoreJSON} className="hidden" />
+                    </div>
+                    <button onClick={handleClearAllData} className="w-full border-2 border-[#C84B31] text-[#C84B31] py-2.5 rounded-xl font-black hover:bg-[#FADBD8]"><Trash2 className="inline mr-2" size={16}/>清除所有資料(重置系統)</button>
+                 </div>
+              </div>
+            )}
+          </main>
+
+          {/* === 專屬簽名檔 === */}
+          <footer className="w-full text-center pb-8 pt-4">
+            <div className="signature-text text-[#8B5A2B] text-xl opacity-70 hover:opacity-100 transition-opacity select-none cursor-default">
+              Regigi✍️@04/2026
+            </div>
+          </footer>
+
+          {/* 全螢幕學生選擇 Modal (完美支援複選) */}
+          {showStudentModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3E2C20]/60 backdrop-blur-sm p-4 animate-fade-in">
+              <div className="bg-[#FFFBF5] border-2 border-[#8B5A2B] w-full max-w-2xl rounded-2xl flex flex-col max-h-[85vh] shadow-2xl">
+                
+                <div className="p-4 border-b border-[#D5C8BA] flex justify-between items-center bg-[#EADDCE] rounded-t-xl">
+                  <h3 className="font-bold flex items-center gap-2 text-[#5C3A21]">
+                    <Users size={18}/> 
+                    {studentModalTarget === 'contact' ? '選擇發送對象 (支援多選)' : '選擇對象 (支援多選)'}
+                  </h3>
+                  <button onClick={()=>setShowStudentModal(false)} className="text-[#8B5A2B] hover:text-[#5C3A21] transition-colors"><X size={24}/></button>
+                </div>
+
+                {studentModalTarget === 'contact' && (
+                  <div className="bg-[#FFDAC1] text-[#5C3A21] px-5 py-2 font-bold text-sm border-b border-[#D5C8BA] shadow-inner">
+                    💡 提示：點擊按鈕即可複選，完成後將自動合併名稱。
+                  </div>
+                )}
+                
+                <div className="p-4 overflow-y-auto flex-1 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                  {seatOptions.map(seat => {
+                    const isSelected = tempSelectedSeats.includes(seat);
+                    return (
+                      <button key={seat} onClick={() => toggleSeatSelection(seat)} 
+                        className={`relative p-3 rounded-xl border-2 flex flex-col items-center transition-all ${
+                          isSelected 
+                            ? 'border-[#8B5A2B] bg-[#8B5A2B] text-white shadow-md transform scale-105' 
+                            : 'border-[#D5C8BA] bg-white text-[#5C4535] hover:border-[#8B5A2B]'
+                        }`}>
+                        <span className="font-mono text-xs opacity-80 mb-0.5">{seat}號</span>
+                        <span className="font-bold whitespace-nowrap overflow-hidden text-ellipsis w-full text-center text-[15px]">
+                          {roster[seat] || '未建檔'}
+                        </span>
+                        {isSelected && <CheckSquare size={16} className="absolute top-1 right-1 opacity-90" />}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <div className="p-4 border-t border-[#D5C8BA] flex justify-between items-center bg-[#F4EDE4] rounded-b-xl">
+                  <span className="font-black text-[#5C3A21]">已選取 <span className="text-[#C84B31]">{tempSelectedSeats.length}</span> 人</span>
+                  <div className="flex gap-3">
+                    <button onClick={()=>setTempSelectedSeats([])} className="px-4 py-2 font-black text-[#8B5A2B] hover:text-[#5C3A21]">清空</button>
+                    <button onClick={confirmStudentSelection} className="px-8 py-2.5 bg-[#8B5A2B] text-white font-black rounded-xl border-b-4 border-[#4A2E16] active:translate-y-1 active:border-b-0 hover:bg-[#5C3A21]">完成選取</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 編輯紀錄 Modal */}
+          {editingLog && (
+            <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#3E2C20]/60 backdrop-blur-sm p-4 animate-fade-in overflow-y-auto">
+               <div className="bg-[#FFFBF5] border-2 border-[#8B5A2B] w-full max-w-4xl rounded-2xl flex flex-col max-h-[90vh]">
+                  <div className="p-4 border-b border-[#D5C8BA] flex justify-between bg-[#EADDCE]"><h3 className="font-black text-xl flex items-center gap-2"><Edit2 size={20}/> 編輯紀錄</h3><button onClick={() => setEditingLog(null)}><X size={24}/></button></div>
+                  <div className="p-6 overflow-y-auto">
+                     <form onSubmit={handleEditSave} className="space-y-4">
+                       <textarea value={editingLog.content} onChange={e=>setEditingLog({...editingLog, content:e.target.value})} rows="6" className="w-full border-2 border-[#D5C8BA] rounded-xl p-3 outline-none"></textarea>
+                       <div className="flex gap-4">
+                         <div className="w-1/4 border-2 border-[#D5C8BA] bg-white rounded-xl p-2">
+                            <label className="block text-[11px] text-[#8B5A2B] font-bold">修改年級</label>
+                            <select value={editingLog.grade} onChange={(e) => handleGradeChange(e, true)} className="w-full bg-transparent outline-none text-base font-bold text-[#3E2C20] py-1 cursor-pointer">
+                              {gradeOptions.map(g => <option key={g} value={g}>{g}</option>)}
+                              <option disabled>──────────</option>
+                              <option value="custom_new_grade">➕ 自訂年級 (新增)</option>
+                            </select>
+                         </div>
+                         <button type="button" onClick={()=>setEditingLog(null)} className="flex-1 bg-[#F4EDE4] py-3 rounded-xl font-black border-b-4 border-[#D5C8BA]">取消</button>
+                         <button type="submit" className="flex-1 bg-[#8B5A2B] text-white py-3 rounded-xl font-black border-b-4 border-[#4A2E16]">儲存修改</button>
+                       </div>
+                     </form>
+                  </div>
+               </div>
+            </div>
+          )}
+
+        </div>
+      );
+    };
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(<ClassroomLogApp />);
   </script>
 </body>
 </html>
+
+
+```
