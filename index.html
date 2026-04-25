@@ -303,6 +303,9 @@
 
       const [aiCategories, setAiCategories] = useState(() => { try { const saved = localStorage.getItem('louisaAiCategories'); return saved ? JSON.parse(saved) : defaultAiCategories; } catch(e) { return defaultAiCategories; } });
       const [aiActionsConfig, setAiActionsConfig] = useState(() => { try { const saved = localStorage.getItem('louisaAiActions'); return saved ? JSON.parse(saved) : defaultAiActions; } catch(e) { return defaultAiActions; } });
+      
+      // 💡 加入金鑰狀態 (從瀏覽器抓取，讓想要用自己的老師依然可以填寫)
+      const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('louisaGeminiApiKey') || '');
 
       useEffect(() => { localStorage.setItem('louisaClassroomStudentCount', studentCount.toString()); }, [studentCount]);
       useEffect(() => { localStorage.setItem('louisaClassroomRoster', JSON.stringify(roster)); }, [roster]);
@@ -312,6 +315,7 @@
       useEffect(() => { localStorage.setItem('louisaGradeOptions', JSON.stringify(gradeOptions)); }, [gradeOptions]);
       useEffect(() => { localStorage.setItem('louisaAiCategories', JSON.stringify(aiCategories)); }, [aiCategories]);
       useEffect(() => { localStorage.setItem('louisaAiActions', JSON.stringify(aiActionsConfig)); }, [aiActionsConfig]);
+      useEffect(() => { localStorage.setItem('louisaGeminiApiKey', geminiApiKey); }, [geminiApiKey]);
 
       const [activeTab, setActiveTab] = useState('add'); 
       
@@ -751,6 +755,22 @@
               setAiQueueIndex(aiQueueIndex + 1);
           }
       };
+      
+      // 💡 終極備援：離線智能拼裝引擎 (無須連線、無須金鑰)
+      const generateOfflineText = (studentName, tags, actions, note) => {
+          let result = `【輔導紀錄與處置】\n\n近期觀察${studentName}在校園與課堂中的表現，特此紀錄以利後續追蹤與輔導。\n\n`;
+          if (tags && tags.length > 0) {
+              result += `📌 狀況概述：\n近期發現該生有「${tags.join('」、「')}」的情形。這些狀況一定程度上影響了學習與常規表現，需要我們共同關注。\n\n`;
+          }
+          if (note && note.trim()) {
+              result += `📝 補充說明：\n${note.trim()}\n\n`;
+          }
+          if (actions && actions.length > 0) {
+              result += `💡 教師處置與輔導策略：\n針對上述情形，導師已在第一時間進行處理，目前採取的輔導措施包含：「${actions.join('」、「')}」。\n\n`;
+          }
+          result += `🌱 後續期許：\n每個孩子都有無限的潛力，過程中的起伏都是成長的契機。期盼能透過親師雙方的密切合作與引導，協助孩子建立正確的觀念與習慣，陪伴其正向發展！`;
+          return result;
+      };
 
       const handleGenerateAI = async () => {
           setIsGeneratingAI(true);
@@ -782,9 +802,16 @@
               return;
           }
 
-          const apiKey = ""; // 💡 使用環境預設設定，無需使用者填寫
-          
-          const systemPrompt = `你是一位專業、有同理心、且經驗豐富的台灣國中小學教師/輔導老師。
+          let finalGeneratedText = "";
+
+          try {
+              // 💡 檢查是否有設定金鑰，沒有的話直接拋出錯誤，觸發備援機制
+              const apiKey = geminiApiKey ? geminiApiKey.trim() : "";
+              if (!apiKey) {
+                  throw new Error('NO_API_KEY');
+              }
+              
+              const systemPrompt = `你是一位專業、有同理心、且經驗豐富的台灣國中小學教師/輔導老師。
 你的任務是根據使用者提供的學生狀況細節、教師處置以及補充說明，撰寫一份專業的「學生輔導紀錄」。
 語氣要求：
 - 專業客觀、不帶個人情緒，使用教育與輔導專業用語。
@@ -792,7 +819,7 @@
 根據字數要求（精簡、標準、詳盡），調整內容的豐富度。
 請直接輸出純文字格式，不要使用 Markdown 語法（例如 **粗體** 或 # 標題）。`;
 
-          const userQuery = `請為學生「${name}」撰寫一份輔導紀錄。
+              const userQuery = `請為學生「${name}」撰寫一份輔導紀錄。
 【狀況細節】：${tagsStr || '無特定標籤'}
 【教師處置】：${actionsStr || '無特定處置'}
 【補充說明】：${aiExtraNote || '無'}
@@ -800,50 +827,72 @@
 
 請直接輸出輔導紀錄的內文，不需要任何開場白或結語。`;
 
-          const payload = {
-              contents: [{ parts: [{ text: userQuery }] }],
-              systemInstruction: { parts: [{ text: systemPrompt }] }
-          };
+              const payload = {
+                  contents: [{ parts: [{ text: userQuery }] }],
+                  systemInstruction: { parts: [{ text: systemPrompt }] }
+              };
 
-          const fetchWithRetry = async (url, options, maxRetries = 5) => {
-              const delays = [1000, 2000, 4000, 8000, 16000];
-              for (let i = 0; i < maxRetries; i++) {
-                  try {
-                      const response = await fetch(url, options);
-                      if (!response.ok) {
-                          const errData = await response.json().catch(() => ({}));
-                          const errMsg = errData.error?.message || `HTTP ${response.status} 錯誤`;
-                          const err = new Error(errMsg);
-                          if (response.status >= 400 && response.status < 500) err.isClientError = true;
-                          throw err;
+              const fetchWithRetry = async (url, options, maxRetries = 2) => {
+                  const delays = [1000, 2000];
+                  for (let i = 0; i < maxRetries; i++) {
+                      try {
+                          const response = await fetch(url, options);
+                          if (!response.ok) {
+                              const errData = await response.json().catch(() => ({}));
+                              const errMsg = errData.error?.message || `HTTP ${response.status} 錯誤`;
+                              const err = new Error(errMsg);
+                              if (response.status >= 400 && response.status < 500) err.isClientError = true;
+                              if (response.status === 429) err.isQuotaError = true;
+                              throw err;
+                          }
+                          return await response.json();
+                      } catch (error) {
+                          if (error.isClientError || i === maxRetries - 1) throw error;
+                          await new Promise(resolve => setTimeout(resolve, delays[i]));
                       }
-                      return await response.json();
-                  } catch (error) {
-                      if (error.isClientError || i === maxRetries - 1) throw error;
-                      await new Promise(resolve => setTimeout(resolve, delays[i]));
+                  }
+              };
+
+              const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+              let aiText = null;
+              let lastError = null;
+
+              for (const model of modelsToTry) {
+                  try {
+                      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                      const result = await fetchWithRetry(url, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(payload)
+                      });
+                      aiText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                      if (aiText) break;
+                  } catch (err) {
+                      lastError = err;
+                      if (err.message.includes('API key not valid')) break; 
                   }
               }
-          };
 
-          try {
-              // 💡 無金鑰版：使用 Canvas 環境預設提供的模型
-              const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-              const result = await fetchWithRetry(url, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(payload)
-              });
-
-              const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (text) {
-                  setAiGeneratedText(text.trim());
+              if (aiText) {
+                  finalGeneratedText = aiText.trim();
               } else {
-                  setAiGeneratedText("⚠️ 生成失敗，請稍後再試。");
+                  throw lastError || new Error("無法連線到 AI 模型");
               }
+              
           } catch (error) {
-              console.error("AI Generation Error:", error);
-              setAiGeneratedText("⚠️ 發生錯誤，無法連線到 AI 服務。請檢查您的網路狀態或稍後再試。");
+              console.warn("AI 發生錯誤或未設定金鑰，啟動離線智能備援模式：", error.message);
+              
+              // 💡 終極解法：啟動離線智能備援模式，保證必定產出文章
+              finalGeneratedText = generateOfflineText(name, aiSelectedTags, aiSelectedActions, aiExtraNote);
+              
+              // 給予使用者溫馨提示，說明目前狀態
+              if (error.message === 'NO_API_KEY') {
+                  showAlert("💡 【無須金鑰！離線智能模式已啟動】\n\n系統偵測到您尚未設定 API 金鑰。為了不打斷您的工作，已自動為您使用「內建智能引擎」秒速產生紀錄！\n\n(若想體驗更靈活的 AI 生成，可隨時在上方補上金鑰)");
+              } else {
+                  showAlert("⚠️ 【API 連線異常，已切換備援模式】\n\n可能是免費額度耗盡或網路不穩。系統已自動為您使用「內建智能引擎」產生紀錄，確保您的工作絕不中斷！");
+              }
           } finally {
+              setAiGeneratedText(finalGeneratedText);
               setIsGeneratingAI(false);
           }
       };
@@ -1325,7 +1374,7 @@
                         <div className="absolute top-0 left-0 bg-[#FAD2E1] border-b-[3px] border-r-[3px] border-[#5C3A21] px-3 py-1 font-black text-[#5C3A21] rounded-br-xl z-10 shadow-sm">2. AI 快寫</div>
                         <div className="p-4 pt-10 flex-1 flex flex-col items-center justify-center bg-[#FAD2E1]/30">
                           <div className="w-12 h-12 bg-white border-[2px] border-[#5C3A21] rounded-full flex items-center justify-center text-2xl shadow-[2px_2px_0_#5C3A21] mb-2 transform rotate-3">✨</div>
-                          <p className="text-[14px] text-[#5C4535] font-bold leading-snug text-center">無須金鑰！勾選標籤自動生成專業紀錄，支援多人群發與圖卡。</p>
+                          <p className="text-[14px] text-[#5C4535] font-bold leading-snug text-center">無須等待！勾選標籤自動生成專業紀錄，更內建離線備援引擎永不當機。</p>
                         </div>
                       </div>
                       
@@ -1402,6 +1451,29 @@
                    <button onClick={() => { setAiMode('batch'); setAiQueueIndex(0); }} className={`pb-3 text-[17px] font-black transition-all ${aiMode === 'batch' ? 'text-[#d81b60] border-b-4 border-[#d81b60]' : 'text-gray-400 hover:text-gray-600'}`}>批次處理</button>
                 </div>
 
+                {/* 💡 低調的 AI 智能金鑰輸入介面 (預設可為空) */}
+                <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-sm border border-pink-100 mb-6 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-2 h-full bg-[#d81b60]"></div>
+                  <h3 className="text-xl font-black mb-3 flex items-center gap-2.5 text-[#333]">
+                    <div className="text-[#d81b60]"><Key size={24} /></div> 
+                    進階設定：自訂 API 金鑰 <span className="text-sm bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md ml-1 font-medium">選填</span>
+                  </h3>
+                  <p className="text-[14px] sm:text-[15px] text-gray-600 mb-5 font-bold leading-relaxed">
+                    若未填寫金鑰，系統將自動啟用<span className="text-[#d81b60]">「離線智能引擎」</span>，保證隨時隨地皆可一鍵產出紀錄！<br/>
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" className="text-blue-500 hover:text-blue-600 hover:underline">👉 想體驗更豐富的生成內容？點此申請免費金鑰</a>
+                  </p>
+                  <div className="relative">
+                    <input 
+                      type="password" 
+                      value={geminiApiKey} 
+                      onChange={e => setGeminiApiKey(e.target.value)} 
+                      placeholder="請貼上您的 Gemini API Key (不填亦可正常使用)..." 
+                      className="w-full border-[2px] border-gray-200 p-3 sm:p-4 min-h-[52px] text-[15px] rounded-xl font-bold outline-none focus:border-[#d81b60] focus:ring-2 focus:ring-pink-100 transition-all text-gray-700" 
+                    />
+                    {geminiApiKey && <span className="absolute right-3 top-3 sm:top-4 text-green-600 font-bold text-[13px] bg-green-50 px-2.5 py-1 rounded-lg border border-green-200 flex items-center gap-1"><CheckCircle2 size={14}/>已啟用 AI</span>}
+                  </div>
+                </div>
+
                 {/* 主卡片：快速設定 */}
                 <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-sm border border-gray-100 space-y-8">
                    
@@ -1429,7 +1501,6 @@
                               <Users size={18} className="text-gray-400 flex-shrink-0"/>
                            </button>
                            
-                           {/* 💡 批次模式也能套用隱私保護格式了 */}
                            <select 
                               value={aiNameFormat} 
                               onChange={e => setAiNameFormat(e.target.value)} 
@@ -1552,7 +1623,7 @@
                         className="w-full py-4 mt-2 bg-gradient-to-r from-[#e91e63] to-[#f06292] text-white font-black text-lg rounded-xl shadow-md active:scale-[0.98] transition-all flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                       >
                         {isGeneratingAI ? <Loader2 size={24} className="animate-spin" /> : <Sparkles size={24} />}
-                        {isGeneratingAI ? '正在生成專業紀錄...' : '✨ 生成專業輔導紀錄'}
+                        {isGeneratingAI ? '系統處理中...' : '✨ 一鍵生成專業輔導紀錄'}
                       </button>
 
                    </div>
